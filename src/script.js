@@ -9,6 +9,7 @@ const gui = new GUI();
 const parameters = {
   materialColor: "#ffeded",
   objectDistance: 4,
+  particleQty: 200,
 };
 
 gui.addColor(parameters, "materialColor").onChange(() => {
@@ -85,8 +86,25 @@ document.addEventListener("mousemove", (e) => {
 
 //Crea Prticles,count, flot32array p * 3, for(), i3 metod, particGeo, pg set Attrib, partiMat color sizeAtt size, points,
 //set particles in tutto il viewport
-
-
+const positions = new Float32Array(parameters.particleQty * 3);
+for (let i = 0; i < parameters.particleQty; i++) {
+  positions[i * 3 + 0] = (Math.random() - 0.5) * 10;
+  positions[i * 3 + 1] =
+    parameters.objectDistance * 0.5 -
+    Math.random() * parameters.objectDistance * meshes.length;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+}
+const particleGeo = new THREE.BufferGeometry();
+particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+// Material
+const particlesMaterial = new THREE.PointsMaterial({
+  color: parameters.materialColor,
+  sizeAttenuation: true,
+  size: 0.03,
+});
+// Points
+const particles = new THREE.Points(particleGeo, particlesMaterial);
+scene.add(particles);
 //aggiungere gui per il colore
 //fai qualcosa in più
 
