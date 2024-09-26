@@ -75,7 +75,7 @@ mesh2.position.x = -2;
 mesh3.position.x = 2;
 
 //Parallax effect, muovere la camera o il background in tal modo che user sente la profondità
-//cursor listnere sul asse x e y
+//cursor listnere sul asse x e y, animate camera con i valori avuti dal cursore nel animation function
 let cursorX = 0;
 let cursorY = 0;
 document.addEventListener("mousemove", (e) => {
@@ -83,12 +83,9 @@ document.addEventListener("mousemove", (e) => {
   cursorY = e.clientY / sizes.height - 0.5;
 });
 
-//animate camera con i valori avuti dal cursore
-//fix il movimento non sincronizzato asse x/y, fix camera che non segue scroll usando gruppo per la camera
-
-//Easing: smooth camera movement considerando frame rate di diversi sistemi usando delta time
 //Crea Prticles,count, flot32array p * 3, for(), i3 metod, particGeo, pg set Attrib, partiMat color sizeAtt size, points,
 //set particles in tutto il viewport
+
 
 //aggiungere gui per il colore
 //fai qualcosa in più
@@ -148,9 +145,12 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
  * Animate
  */
 const clock = new THREE.Clock();
+let prevTime = 0;
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+  const deltaTime = elapsedTime - prevTime;
+  prevTime = elapsedTime;
 
   for (const mesh of meshes) {
     mesh.rotation.x = elapsedTime * 0.09;
@@ -160,8 +160,12 @@ const tick = () => {
   //cambiare poszione della camera
   camera.position.y = (-lastScrollY / sizes.height) * parameters.objectDistance;
 
-  cameraGroup.position.x = cursorX;
-  cameraGroup.position.y = -cursorY;
+  const parallaxX = cursorX;
+  const parallaxY = -cursorY;
+  cameraGroup.position.x +=
+    (parallaxX - cameraGroup.position.x) * deltaTime * 1.5;
+  cameraGroup.position.y +=
+    (parallaxY - cameraGroup.position.y) * deltaTime * 1.5;
 
   // Render
   renderer.render(scene, camera);
