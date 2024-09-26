@@ -1,18 +1,31 @@
 import * as THREE from "three";
 import GUI from "lil-gui";
 
-/**
+/***********************************
  * Debug
  */
 const gui = new GUI();
 
 const parameters = {
   materialColor: "#ffeded",
+  objectDistance: 4,
 };
 
-gui.addColor(parameters, "materialColor");
+gui.addColor(parameters, "materialColor").onChange(() => {
+  material.color.set(parameters.materialColor);
+});
 
-/**
+/**********************************
+ * Texture
+ */
+const loader = new THREE.TextureLoader();
+const texture = loader.load("/textures/gradients/3.jpg");
+texture.colorSpace = THREE.SRGBColorSpace;
+
+//webgl cerca sempre di merge i colori vicini per avere un risultato gradiente, usare magFilter diverso dal default
+texture.magFilter = THREE.NearestFilter;
+
+/***********************************
  * Base
  */
 // Canvas
@@ -21,16 +34,67 @@ const canvas = document.querySelector("canvas.webgl");
 // Scene
 const scene = new THREE.Scene();
 
-/**
- * Test cube
+/***********************************
+ * Objects
  */
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
-  new THREE.MeshBasicMaterial({ color: "#ff0000" })
-);
-scene.add(cube);
+//creare dei Mesh di prova
+const material = new THREE.MeshToonMaterial({
+  color: parameters.materialColor,
+  gradientMap: texture,
+});
 
-/**
+const mesh1 = new THREE.Mesh(new THREE.TorusGeometry(1, 0.4, 16, 60), material);
+const mesh2 = new THREE.Mesh(new THREE.ConeGeometry(1, 2, 32), material);
+const mesh3 = new THREE.Mesh(
+  new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16),
+  material
+);
+scene.add(mesh1, mesh2, mesh3);
+
+//Lights
+const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+directionalLight.position.set(1, 1, 0);
+scene.add(directionalLight);
+
+const meshes = [mesh1, mesh2, mesh3];
+
+for (let i = 0; i < meshes.length; i++) {
+  meshes[i].position.y = -parameters.objectDistance * i;
+}
+
+//scroll listener, animate camera con scroll in animation function
+let lastScrollY = 0;
+
+document.addEventListener("scroll", () => {
+  lastScrollY = window.scrollY;
+});
+
+//poszionare i mesh nel posto giusto rispetto al posizione del 
+mesh1.position.x = 2;
+mesh2.position.x = -2;
+mesh3.position.x = 2;
+
+//Parallax effect, muovere la camera o il background in tal modo che user sente la profondità
+//cursor listnere sul asse x e y
+document.addEventListener('mousemove', (e) => {
+  console.log(e.clientX);
+  
+})
+//fai in modo che il valore del cursore rimanga sempre da 0-1 sia x che y per mantenere lo stesso effetto su tutti gli schermi
+//fai il modo che il cambiamento del valore cursore inizi dal -0.5 al 0.5 per avere valori negativi e positivi
+//animate camera con i valori avuti dal cursore
+//fix il movimento non sincronizzato asse x/y, fix camera che non segue scroll usando gruppo per la camera
+
+//Easing: smooth camera movement considerando frame rate di diversi sistemi usando delta time
+//Crea Prticles,count, flot32array p * 3, for(), i3 metod, particGeo, pg set Attrib, partiMat color sizeAtt size, points,
+//set particles in tutto il viewport
+
+//aggiungere gui per il colore
+//fai qualcosa in più
+
+// spin objec con gsap quando arrivi ad ogni sezione, quindi serve contatore dei sezioni, mettere una condizione che attiva gsap.to che va a prendere ogni mesh dall'array dei meshes in base alla section
+
+/**********************************
  * Sizes
  */
 const sizes = {
@@ -52,7 +116,7 @@ window.addEventListener("resize", () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
-/**
+/***********************************
  * Camera
  */
 // Base camera
@@ -65,7 +129,7 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.z = 6;
 scene.add(camera);
 
-/**
+/***********************************
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
@@ -76,13 +140,21 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-/**
+/***********************************
  * Animate
  */
 const clock = new THREE.Clock();
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+
+  for (const mesh of meshes) {
+    mesh.rotation.x = elapsedTime * 0.09;
+    mesh.rotation.y = elapsedTime * 0.1;
+  }
+
+  //cambiare poszione della camera
+  camera.position.y = (-lastScrollY / sizes.height) * parameters.objectDistance;
 
   // Render
   renderer.render(scene, camera);
