@@ -69,19 +69,20 @@ document.addEventListener("scroll", () => {
   lastScrollY = window.scrollY;
 });
 
-//poszionare i mesh nel posto giusto rispetto al posizione del 
+//poszionare i mesh nel posto giusto rispetto al posizione del
 mesh1.position.x = 2;
 mesh2.position.x = -2;
 mesh3.position.x = 2;
 
 //Parallax effect, muovere la camera o il background in tal modo che user sente la profondità
 //cursor listnere sul asse x e y
-document.addEventListener('mousemove', (e) => {
-  console.log(e.clientX);
-  
-})
-//fai in modo che il valore del cursore rimanga sempre da 0-1 sia x che y per mantenere lo stesso effetto su tutti gli schermi
-//fai il modo che il cambiamento del valore cursore inizi dal -0.5 al 0.5 per avere valori negativi e positivi
+let cursorX = 0;
+let cursorY = 0;
+document.addEventListener("mousemove", (e) => {
+  cursorX = e.clientX / sizes.width - 0.5;
+  cursorY = e.clientY / sizes.height - 0.5;
+});
+
 //animate camera con i valori avuti dal cursore
 //fix il movimento non sincronizzato asse x/y, fix camera che non segue scroll usando gruppo per la camera
 
@@ -119,6 +120,9 @@ window.addEventListener("resize", () => {
 /***********************************
  * Camera
  */
+//group camera
+const cameraGroup = new THREE.Group();
+scene.add(cameraGroup);
 // Base camera
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -127,7 +131,7 @@ const camera = new THREE.PerspectiveCamera(
   100
 );
 camera.position.z = 6;
-scene.add(camera);
+cameraGroup.add(camera);
 
 /***********************************
  * Renderer
@@ -155,6 +159,9 @@ const tick = () => {
 
   //cambiare poszione della camera
   camera.position.y = (-lastScrollY / sizes.height) * parameters.objectDistance;
+
+  cameraGroup.position.x = cursorX;
+  cameraGroup.position.y = -cursorY;
 
   // Render
   renderer.render(scene, camera);
